@@ -19,6 +19,7 @@
 **Notes**:
 
 - Tested and working on Windows (Node 12.x) and Mac (Node 15.x).  As this entire assignment is written in JavaScript/NodeJS, there is no reason to believe it wouldn't also work on Linux
+- In a real-world scenario, I would use something like MongoDB to store the data, which would also provide all the capability to perform any kind of calcs/aggregations on the data.  I wanted to write all the data manipulation code myself to highlight my experience and ability to code all the functionality
 - The final CSV output is stored in `outputCache/aggregateOutput.csv`
 - Input data (fetched from Census and CFPB APIs) is cached/stored in the inputCache folder
 - Output data (anything I did with the input data) is cached/stored in the outputCache folder
