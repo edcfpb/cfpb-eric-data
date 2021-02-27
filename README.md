@@ -7,7 +7,7 @@
 - Open a command/shell prompt and go in to this project/repo directory
 - Run `npm install` or `yarn install` if you have yarn
 - Everything should run automatically post install
-- If you need to manually start, run `npm start` or `gulp start` to start kick off the process and start the web server
+- If you need to manually start, run `npm start` or `gulp start` to kick off the process and start the web server
 - Use your web browser to access http://localhost:6789/ which will show you the visualization I created, as well as provide a download link for the final CSV output file
 
 
