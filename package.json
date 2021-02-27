@@ -1,0 +1,20 @@
+{
+  "name": "cfpb-eric-data",
+  "version": "1.0.0",
+  "description": "Eric's CFPB Data Engineer Assignment",
+  "main": "app.js",
+  "author": "Eric",
+  "license:": "N/A",
+  "scripts": {
+    "start": "gulp start",
+    "postinstall": "gulp start"
+  },
+  "dependencies": {
+    "csv": "^5.3.2",
+    "express": "^4.17.1",
+    "gulp": "^4.0.2",
+    "gulp-live-server": "^0.0.31",
+    "lodash": "^4.17.15",
+    "node-fetch": "^2.6.0"    
+  }
+}

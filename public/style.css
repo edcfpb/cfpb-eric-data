@@ -1,0 +1,30 @@
+body {
+  background: #333;
+}
+
+.graph-container {
+  width: 80%;
+  height: 65%;
+}
+
+.svg-container {
+  display: inline-block;
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  vertical-align: top;
+  overflow: hidden;
+}
+.svg-content-responsive {
+  display: inline-block;
+  position: absolute;
+  top: 10px;
+  left: 0;
+}
+
+.axis-label path, .axis-label line {
+  stroke: white;
+}
+.axis-label line, .axis-label text {
+  fill: white;
+}

@@ -1,0 +1,150 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css" />
+    <script src="lib/d3.v4.min.js"></script>
+  </head>
+
+  <body>
+    <div class="download">
+      <button onClick="downloadCSV()">Download Aggregate CSV File</button>
+    </div>
+    <div class="graph-container" id="hmda"></div>
+  </body>
+
+  <script>
+    // download the final CSV output
+    async function downloadCSV () {
+      let csvData = await fetch('/aggregateCsvData')
+      let csvRaw = await csvData.json()
+      let csvBlob = new Blob([csvRaw.join("\n")], {type: "text/csv"})
+      let link = document.createElement('a');
+      link.download = "EricD_CFPB_assignment.csv";
+      link.href = window.URL.createObjectURL(csvBlob);
+      link.style.display = "none";
+      document.body.appendChild(link)
+      link.click()
+    }
+
+    // render the grouped bar chart
+    function createBarChart () {
+      let margin = {top: 10, right: 30, bottom: 20, left: 50},
+          width = 800 - margin.left - margin.right
+          height = 450 - margin.top - margin.bottom
+
+      // find container, init canvas
+      let svg = d3.select("#hmda")
+        .append("div")
+        .classed("svg-container", true) 
+        .append("svg")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .attr("viewBox", "0 0 1000 1000")
+        .classed("svg-content-responsive", true)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+      // fetch data
+      d3.json("/aggregateData", (data) => {
+        // sort by average property value
+        data.sort((a, b) => d3.descending(a.avgPropertyValue, b.avgPropertyValue ))
+
+        // helper func to return MSA name from MSA ID
+        function getMsaName (msaId) {
+          return data.find(row =>  row.group == msaId).msaName.split(',')[0]
+        }
+
+        // list of bar groups on the X axis
+        let barGroups = ['avgIncome', 'avgPropertyValue']
+      
+        // list of groupings (MSAs / metro areas)
+        let groups = d3.map(data, (d) => (d.group)).keys()
+
+        // color palette
+        let color = d3.scaleOrdinal()
+          .domain(barGroups)
+          .range(['#ee1a1c','#377db9'])
+
+        // add legend
+        let legend = svg.append("g")
+          .attr("font-family", "sans-serif")
+          .attr("font-size", 10)
+          .attr("class", "axis-label")
+          .attr("text-anchor", "end")
+          .selectAll("g")
+          .data(barGroups)
+          .enter().append("g")
+          .attr("transform", (d, i) => "translate(0," + i * 20 + ")")
+
+        legend.append("rect")
+          .attr("x", width - 17)
+          .attr("width", 15)
+          .attr("height", 15)
+          .attr("fill", color)
+          .attr("stroke", color)
+          .attr("stroke-width",2)
+
+        legend.append("text")
+          .attr("x", width - 24)
+          .attr("y", 9.5)
+          .attr("dy", "0.32em")
+          .text((d) => d)
+    
+        // X axis
+        let x = d3.scaleBand()
+          .domain(groups)
+          .range([0, width])
+          .padding([0.2])
+
+        // X axis labels
+        svg.append("g")
+          .attr("transform", "translate(0," + height + ")")
+          .style("font", "9px times")
+          .attr("class", "axis-label")
+          .call(d3.axisBottom(x)
+          .tickSize(0)
+          .tickFormat((d) => getMsaName(d)))
+          
+      
+        // Y axis
+        let y = d3.scaleLinear()
+          .domain([0, d3.max(data, (d) => Math.max(d.avgIncome,d.avgPropertyValue) + 20000)])
+          .range([ height, 0 ])
+        
+        // Y axis label format helper
+        let dollarFormat = (d) =>'$' + d3.format(',')(d)
+
+        // Y axis labels
+        svg.append("g")
+          .attr("class", "axis-label")
+          .style("font", "9px times")
+          .call(d3.axisLeft(y)
+          .tickFormat(dollarFormat))
+      
+        // second X axis for bar groups
+        let xBarGroup = d3.scaleBand()
+          .domain(barGroups)
+          .range([0, x.bandwidth()])
+          .padding([0.1])
+
+        // add the bars
+        svg.append("g")
+          .selectAll("g")
+          .data(data)
+          .enter()
+          .append("g")
+          .attr("transform", (d) => "translate(" + x(d.group) + ",0)")
+          .selectAll("rect")
+          .data((d) => { 
+            return barGroups.map(function(key) { return {key: key, value: d[key]} })
+          })
+          .enter().append("rect")
+            .attr("x", (d) => xBarGroup(d.key))
+            .attr("y", (d) => y(d.value))
+            .attr("width", xBarGroup.bandwidth())
+            .attr("height", (d) => height - y(d.value))
+            .attr("fill", (d) => color(d.key))
+      })
+    }
+
+    createBarChart()
+  </script>
+</html>
