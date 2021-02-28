@@ -46,6 +46,10 @@
 - [node-csv](https://github.com/adaltas/node-csv) to convert CSV to JSON
 - [gulp](https://github.com/gulpjs/gulp) task runner
 
+**Thoughts on my visualization:**
+
+I am showing average income vs average property value, per metropolitan statistical area.  From this, I think you can infer that areas with higher the property value vs income, those metropolitan areas are desirable because either the property values are rising, or people are spending more money relative to their income to live there.  You could pull and plot this same data over time to find trends and possible discover upcoming areas to live or invest in property.
+
 **Screenshot of the web page showing the visualization:**
 
 ![Screenshot](/screenshot.png)
