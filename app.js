@@ -141,8 +141,22 @@ function parseCfpbData () {
 
 // perform all the necessary calcs to produce the desired output for the assignment
 function crunchData () {
+  // list of columns/fields we're aggregating
+  const aggregateFieldMap = {
+    'avgLoanAmount': 'loan_amount',
+    'avgLtvRatio': 'loan_to_value_ratio',
+    'avgInterestRate': 'interest_rate',
+    'avgLoanCosts': 'total_loan_costs',
+    'avgLoanTermMonths': 'loan_term',
+    'avgPropertyValue': 'property_value',
+    'avgIncome': 'income'
+  }
+
+  let removeFromAvg = {}
+
   // reducer to create/massage the data to the expected output
   aggregateData = usefulJson.reduce((ret, row) => {
+    // if MSA ID key does not exist, create it
     if (!ret[row.msa_id]) {
       ret[row.msa_id] = {
         tracts: {},
@@ -156,6 +170,10 @@ function crunchData () {
         avgIncome: 0,
         loanCount: 0
       }
+
+      // populate the remove from average map, used to store counts to remove non-numbers from average weighting
+      removeFromAvg[row.msa_id] = {}
+      for (key in aggregateFieldMap) removeFromAvg[row.msa_id][key] = 0
     }
 
     // keep track of the number of loans per MSA ID
@@ -165,14 +183,18 @@ function crunchData () {
     ret[row.msa_id].raceCounts[row.derived_race] = ret[row.msa_id].raceCounts[row.derived_race] ? ret[row.msa_id].raceCounts[row.derived_race] + 1 : 1
 
     // keep a running sum for each field, which we will use to calc the average later
-    // convert any non-number to 0
-    ret[row.msa_id].avgLoanAmount += parseFloat(row.loan_amount) || 0
-    ret[row.msa_id].avgLtvRatio += parseFloat(row.loan_to_value_ratio) || 0
-    ret[row.msa_id].avgInterestRate += parseFloat(row.interest_rate) || 0
-    ret[row.msa_id].avgLoanCosts += parseFloat(row.total_loan_costs) || 0
-    ret[row.msa_id].avgLoanTermMonths += parseFloat(row.loan_term) || 0
-    ret[row.msa_id].avgPropertyValue += parseFloat(row.property_value) || 0
-    ret[row.msa_id].avgIncome += parseFloat(row.income) || 0
+    // keep a count of non-number values per column/field, used later to prevent being weighed in the average
+    _.forEach(aggregateFieldMap, (fieldName, aggName) => {
+      // convert value/cell to a number
+      let num = parseFloat(row[fieldName])
+      // if not a number, keep track of the count so we dont weight it against the average for that column/field
+      if (_.isNaN(num)) {
+        removeFromAvg[row.msa_id][aggName] += 1
+      } else {
+        // if it is a number, add it to running sum, to average later
+        ret[row.msa_id][aggName] += num
+      }
+    })
 
     // only need to take the average of a single tract_minority_population_percent per census_tract per MSA ID so it is weighted evenly
     // this will just keep over-writing the census_tract property, so when we calculate the average there is 1 value per censust tract
@@ -186,15 +208,14 @@ function crunchData () {
 
   // calculate the averages
   for (let key in aggregateData) {
-    aggregateData[key].avgLoanAmount = _.round(aggregateData[key].avgLoanAmount / aggregateData[key].loanCount, 2)
-    aggregateData[key].avgLtvRatio = _.round(aggregateData[key].avgLtvRatio / aggregateData[key].loanCount, 2)
-    aggregateData[key].avgInterestRate = _.round(aggregateData[key].avgInterestRate / aggregateData[key].loanCount, 2)
-    aggregateData[key].avgLoanCosts = _.round(aggregateData[key].avgLoanCosts / aggregateData[key].loanCount, 2)
-    aggregateData[key].avgLoanTermMonths = _.round(aggregateData[key].avgLoanTermMonths / aggregateData[key].loanCount, 2)
-    aggregateData[key].avgPropertyValue = _.round(aggregateData[key].avgPropertyValue / aggregateData[key].loanCount, 2)
     // convert to actual income (EG 32 actually represents 32,000, so * 1000)
-    aggregateData[key].avgIncome = _.round(aggregateData[key].avgIncome * 1000 / aggregateData[key].loanCount, 2)
-    
+    aggregateData[key].avgIncome = aggregateData[key].avgIncome * 1000
+
+    // calculate averages, removing weighting from each field dynamically (dont weight non-number entries in each column/field)
+    _.forEach(removeFromAvg[key], (removeCount, fieldName) => {
+      aggregateData[key][fieldName] = _.round(aggregateData[key][fieldName] / (aggregateData[key].loanCount - removeCount), 2)
+    })
+
     // store the sum of minority population values to average out
     let minorityPopulationSum = 0
     for (let tractKey in aggregateData[key].tracts) {
@@ -216,7 +237,7 @@ function crunchData () {
 // func to generate the final CSV output of the assignment
 function generateCsv () {
   // init var to hold CSV data, begin header row
-  const csvData = [['MSA Name', 'MSA ID','Number of Loans', 'Avg Loan Amount', 'Avg LTV Ratio', 'Avg Interest Rate', 'Avg Loan Cost', 'Avg Loan Terms (months)', 'Avg Property Value', 'Avg Income', 'Avg Minority Population (pecent)']]
+  const csvData = [['MSA Name', 'MSA ID','Number of Loans', 'Avg Loan Amount', 'Avg LTV Ratio', 'Avg Interest Rate', 'Avg Loan Cost', 'Avg Loan Terms (months)', 'Avg Property Value', 'Avg Income', 'Avg Minority Population (percent)']]
   // append each "derived_race" as a header column
   csvData[0].push(...raceList)
   
