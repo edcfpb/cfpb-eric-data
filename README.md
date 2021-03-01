@@ -11,14 +11,10 @@
 - Use your web browser to access http://localhost:6789/ which will show you the visualization I created, as well as provide a download link for the final CSV output file
 
 
-**Assumptions:**
-
-- Several of the columns to be aggregated had some non-number values: "NA" and/or "Exempt".  I converted these to 0 and they are weighted in the average as such.  It would be easy enough to change this conversion or even remove those values from the average calclation completely
-- I correctly weighted the `tract_minority_population_percent` column by only averaging the value once, per `census_tract` (tract id), per `derived_msa-md` (MSA ID).  EG: If an MSA has 1,000 loans but only 10 unique tracts, I calculate the average by adding up the 10 unique `tract_minority_population_percent` and dividing by 10, whereas the other aggregate/average columns use all the loans in the MSA
-
 **Notes**:
 
 - Tested and working on Windows (Node 12.x) and Mac (Node 15.x).  As this entire assignment is written in JavaScript/NodeJS, there is no reason to believe it wouldn't also work on Linux
+- I correctly weighted the `tract_minority_population_percent` column by only averaging the value once, per `census_tract` (tract id), per `derived_msa-md` (MSA ID).  EG: If an MSA has 1,000 loans but only 10 unique tracts, I calculate the average by adding up the 10 unique `tract_minority_population_percent` and dividing by 10, whereas the other aggregate/average columns use all the loans in the MSA
 - In a real-world scenario, I would use something like MongoDB to store the data, which would also provide all the capability to perform any kind of calcs/aggregations on the data.  I wanted to write all the data manipulation code myself to highlight my experience and ability to code all the functionality
 - The final CSV output is stored in `outputCache/aggregateOutput.csv`
 - Input data (fetched from Census and CFPB APIs) is cached/stored in the inputCache folder
